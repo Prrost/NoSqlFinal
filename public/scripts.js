@@ -1,13 +1,10 @@
 document.getElementById('fetchData').addEventListener('click', fetchData);
-document.getElementById('fetchMetrics').addEventListener('click', fetchMetrics);
 let chartInstance = null;
 
 async function fetchData() {
     const field = document.getElementById('field').value;
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
-
-
 
     if (!field || !startDate || !endDate) {
         alert('Please provide field, start date, and end date');
@@ -21,20 +18,30 @@ async function fetchData() {
         const result = await response.json();
 
         const outputDiv = document.getElementById('dataOutput');
+        const metricsDiv = document.getElementById('metricsOutput');
+
         outputDiv.style.display = 'block';
+        metricsDiv.style.display = 'block';
+
+        if (result.error) {
+            outputDiv.innerHTML = `<p>Error: ${result.error}</p>`;
+            metricsDiv.innerHTML = "";
+            return;
+        }
 
         const timestamps = result.data.map(entry => new Date(entry.timestamp).toLocaleString());
         const values = result.data.map(entry => entry[field]);
 
+        outputDiv.innerHTML = `<pre>${JSON.stringify(result.data, null, 2)}</pre>`;
 
+        metricsDiv.innerHTML = `
+            <h3>Metrics:</h3>
+            <p><strong>Avg:</strong> ${result.avg.toFixed(2)}</p>
+            <p><strong>Min:</strong> ${result.min}</p>
+            <p><strong>Max:</strong> ${result.max}</p>
+        `;
 
-        if (result.data.error) {
-            outputDiv.innerHTML = `<p>Error: ${result.data.error}</p>`;
-        } else {
-            outputDiv.innerHTML = `<pre>${JSON.stringify(result.data, null, 2)}</pre>`;
-            console.log(result.nums)
-            renderChart(timestamps, values,field);
-        }
+        renderChart(timestamps, values, field);
     } catch (err) {
         console.error('Error fetching data:', err);
     }
@@ -60,31 +67,3 @@ function renderChart(labels, data, field) {
         }
     });
 }
-
-async function fetchMetrics() {
-    const field = document.getElementById('metricField').value;
-
-    if (!field) {
-        alert('Please provide field for metrics');
-        return;
-    }
-
-    const url = `/api/measurements/metrics?field=${field}`;
-
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        const outputDiv = document.getElementById('metricsOutput');
-        outputDiv.style.display = 'block';
-
-        if (data.error) {
-            outputDiv.innerHTML = `<p>Error: ${data.error}</p>`;
-        } else {
-            outputDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-        }
-    } catch (err) {
-        console.error('Error fetching metrics:', err);
-    }
-}
-

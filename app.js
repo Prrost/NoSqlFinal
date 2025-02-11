@@ -6,7 +6,7 @@ app.use(express.json());
 app.use(express.static("public"));
 
 const uri = "mongodb://localhost:27018";
-const dbName = "mesurments";
+const dbName = "weatherdata";
 const PORT = 8080;
 
 
@@ -38,7 +38,6 @@ app.get('/api/measurements', async (req, res) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
 
-
         const data = await db.collection('my')
             .find({
                 timestamp: { $gte: start, $lte: end },
@@ -51,18 +50,12 @@ app.get('/api/measurements', async (req, res) => {
             return res.status(404).json({ error: 'Нет данных для данного поля' });
         }
 
-        const nums = await db.collection('my')
-            .find({
-                timestamp: { $gte: start, $lte: end },
-                [field]: { $exists: true }
-            })
-            .project({[field]: 1 , _id: 0})
-            .toArray();
+        const values = data.map(item => item[field]);
+        const avg = values.reduce((acc, val) => acc + val, 0) / values.length;
+        const min = Math.min(...values);
+        const max = Math.max(...values);
 
-        console.log(nums)
-
-
-        res.json({ data, nums } );
+        res.json({ data, avg, min, max });
     } catch (err) {
         console.error('Ошибка при получении данных:', err);
         res.status(500).json({ error: 'Ошибка при получении данных' });
