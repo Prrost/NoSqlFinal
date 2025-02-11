@@ -1,8 +1,9 @@
-const express = require('express');
+const express = require("express");
 const { MongoClient } = require("mongodb");
+const multer = require("multer");
+const fs = require("fs");
 
 const app = express();
-app.use(express.json());
 app.use(express.static("public"));
 
 const uri = "mongodb://localhost:27018";
@@ -10,6 +11,10 @@ const dbName = "weatherdata";
 const PORT = 8080;
 
 let db;
+
+
+const upload = multer({ dest: "uploads/" });
+
 
 async function dbInit() {
     try {
@@ -89,6 +94,31 @@ app.get('/api/measurements/metrics', async (req, res) => {
         res.status(500).json({ error: 'Error calculating metrics' });
     }
 });
+
+app.post("/api/upload", upload.single("file"), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    try {
+        const filePath = req.file.path;
+        const rawData = fs.readFileSync(filePath, "utf8");
+        const jsonData = JSON.parse(rawData); // Если JSON
+
+        if (!Array.isArray(jsonData)) {
+            return res.status(400).json({ error: "Invalid file format" });
+        }
+
+        await db.collection("my").insertMany(jsonData);
+        fs.unlinkSync(filePath); // Удаляем файл после загрузки
+
+        res.json({ message: "Data uploaded successfully" });
+    } catch (err) {
+        console.error("File processing error:", err);
+        res.status(500).json({ error: "Error processing file" });
+    }
+});
+
 
 
 dbInit().catch((err) => {

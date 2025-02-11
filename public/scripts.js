@@ -70,23 +70,34 @@ function renderChart(labels, data, field) {
 }
 
 
-document.getElementById("updateData").addEventListener("click", async () => {
-    const status = document.getElementById("updateStatus");
-    status.textContent = "Обновление данных...";
+document.getElementById("uploadButton").addEventListener("click", async () => {
+    const fileInput = document.getElementById("fileInput");
+    const status = document.getElementById("uploadStatus");
+
+    if (!fileInput.files.length) {
+        status.textContent = "Please select a file.";
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    status.textContent = "Uploading...";
 
     try {
-        const response = await fetch("/api/update-data", {
+        const response = await fetch("/api/upload", {
             method: "POST",
+            body: formData,
         });
 
         const result = await response.json();
         if (response.ok) {
-            status.textContent = "Данные успешно обновлены!";
+            status.textContent = "File uploaded successfully!";
         } else {
-            status.textContent = `Ошибка: ${result.error}`;
+            status.textContent = `Error: ${result.error}`;
         }
     } catch (error) {
-        console.error("Ошибка при обновлении:", error);
-        status.textContent = "Ошибка при обновлении данных.";
+        console.error("Upload error:", error);
+        status.textContent = "Upload failed.";
     }
 });
