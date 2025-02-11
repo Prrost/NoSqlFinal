@@ -16,6 +16,7 @@ async function fetchData() {
     try {
         const response = await fetch(url);
         const result = await response.json();
+        console.log(result);
 
         const outputDiv = document.getElementById('dataOutput');
         const metricsDiv = document.getElementById('metricsOutput');
@@ -29,7 +30,7 @@ async function fetchData() {
             return;
         }
 
-        const timestamps = result.data.map(entry => new Date(entry.timestamp).toLocaleString());
+        const timestamps = result.data.map(entry => entry.datetime);
         const values = result.data.map(entry => entry[field]);
 
         outputDiv.innerHTML = `<pre>${JSON.stringify(result.data, null, 2)}</pre>`;
@@ -67,3 +68,25 @@ function renderChart(labels, data, field) {
         }
     });
 }
+
+
+document.getElementById("updateData").addEventListener("click", async () => {
+    const status = document.getElementById("updateStatus");
+    status.textContent = "Обновление данных...";
+
+    try {
+        const response = await fetch("/api/update-data", {
+            method: "POST",
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            status.textContent = "Данные успешно обновлены!";
+        } else {
+            status.textContent = `Ошибка: ${result.error}`;
+        }
+    } catch (error) {
+        console.error("Ошибка при обновлении:", error);
+        status.textContent = "Ошибка при обновлении данных.";
+    }
+});
