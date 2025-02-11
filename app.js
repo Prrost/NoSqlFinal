@@ -103,14 +103,14 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
     try {
         const filePath = req.file.path;
         const rawData = fs.readFileSync(filePath, "utf8");
-        const jsonData = JSON.parse(rawData); // Если JSON
+        const jsonData = JSON.parse(rawData);
 
         if (!Array.isArray(jsonData)) {
             return res.status(400).json({ error: "Invalid file format" });
         }
 
         await db.collection("my").insertMany(jsonData);
-        fs.unlinkSync(filePath); // Удаляем файл после загрузки
+        fs.unlinkSync(filePath);
 
         res.json({ message: "Data uploaded successfully" });
     } catch (err) {
